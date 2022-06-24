@@ -1,7 +1,8 @@
 import Head from 'next/head'
 import clientPromise from '../lib/mongodb'
 
-export default function Home({ isConnected }) {
+export default function Home({ isConnected, data }, res) {
+  let echoData = JSON.stringify(data)
   return (
     <div className="container">
       <Head>
@@ -22,6 +23,8 @@ export default function Home({ isConnected }) {
             for instructions.
           </h2>
         )}
+
+        {echoData}
 
         <p className="description">
           Get started by editing <code>pages/index.js</code>
@@ -224,7 +227,6 @@ export default function Home({ isConnected }) {
 
 export async function getServerSideProps(context) {
   try {
-    await clientPromise
     // `await clientPromise` will use the default database passed in the MONGODB_URI
     // However you can use another database (e.g. myDatabase) by replacing the `await clientPromise` with the following code:
     //
@@ -234,13 +236,26 @@ export async function getServerSideProps(context) {
     // Then you can execute queries against your database like so:
     // db.find({}) or any of the MongoDB Node Driver commands
 
+    const client = await clientPromise
+    const db = client.db("auth")
+    const getdata = await db.collection('users').findOne({});
+    if (!getdata) {
+      return {
+        redirect: {
+          destination: '/',
+          permanent: false,
+        },
+      }
+    } else {
+      console.log(getdata)
+    }
     return {
-      props: { isConnected: true },
+      props: { isConnected: true, data: getdata ? JSON.parse(JSON.stringify(getdata)) : "no data" },
     }
   } catch (e) {
     console.error(e)
     return {
-      props: { isConnected: false },
+      props: { isConnected: false, data: [] },
     }
   }
 }

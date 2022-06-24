@@ -1,9 +1,33 @@
-export default function handler(req, res) {
-    if (req.method === 'GET') {
-        // Process a POST request - Example:
-        res.status(200).json({ name: "John Doe" })
+import Head from 'next/head'
+import clientPromise from '../../../lib/mongodb'
+
+export default async function handler(req, res) {
+  const client = await clientPromise
+  const userModel = client.db("auth").collection('users')
+  let reqData = req.query
+  switch (req.method) {
+    case 'GET':
+      reqData = req.query
+      break
+    case 'POST':
+      reqData = req.body
+      break
+    default:
+      res.status(400).json({ success: false })
+      break
+  }
+  try {
+    const user = await userModel.findOne({ "email": reqData.email, "password": reqData.password })
+    console.log(user)
+    if (user != null) {
+      const jwt = require('jsonwebtoken')
+      let accessTokenSecret = "vagustim"
+      const accessToken = jwt.sign({ username: user.username, role: user.role }, accessTokenSecret);
+      res.status(200).json({ success: true, access_token: accessToken })
     } else {
-        // Handle any other HTTP method
-        res.status(200).json({ name: "John Doex" })
+      res.status(400).json({ success: false })
     }
+  } catch (error) {
+    res.status(400).json({ success: false })
+  }
 }
