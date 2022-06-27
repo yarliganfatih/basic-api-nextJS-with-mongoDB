@@ -6,9 +6,6 @@ export default async function handler(req, res) {
   const userModel = client.db("auth").collection('users')
   let reqData = req.query
   switch (req.method) {
-    case 'GET':
-      reqData = req.query
-      break
     case 'POST':
       reqData = req.body
       break
@@ -25,9 +22,9 @@ export default async function handler(req, res) {
       const accessToken = jwt.sign({ username: user.username, role: user.role }, accessTokenSecret);
       res.status(200).json({ success: true, access_token: accessToken })
     } else {
-      res.status(400).json({ success: false })
+      res.status(400).json({ success: false, errorMsg: 'Invalid Email or Password' })
     }
   } catch (error) {
-    res.status(400).json({ success: false })
+    res.status(400).json({ success: false, errorMsg: error.message })
   }
 }
